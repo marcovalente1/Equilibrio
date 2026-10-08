@@ -165,42 +165,133 @@ const PUBLIC_KEY='sb_publishable_EGnvg7rTei2mBABlKVrUHg_kiK2pUWt';
 const $=id=>document.getElementById(id), status=t=>$('cloudStatus').textContent=t;
 if(!window.supabase?.createClient){status('Servizio cloud non caricato. I dati restano salvati localmente.');return;}
 const client=window.supabase.createClient(URL,PUBLIC_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const KEY='equilibrio-v1';let user=null,enabled=false,timer=null,busy=false;
+const KEY='equilibrio-v1';
 const local=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}};
-function toggle(){ $('cloudAuth').hidden=!!user;$('cloudConnected').hidden=!user; if(user&&!enabled)status('Connesso come '+user.email+'. Scegli Carica o Scarica per iniziare.');if(!user)status('Dati salvati in locale. Accedi per sincronizzarli.');}
-async function cloudRead(){const {data,error}=await client.from('equilibrio_data').select('payload,updated_at').eq('category','impostazioni').eq('entry_key','snapshot').maybeSingle();if(error)throw error;return data;}
-async function checkCloud(){
- const area=$('cloudAvailability'),button=$('cloudCheck');
- if(!user){area.hidden=true;button.hidden=true;return;}
- area.hidden=false;button.hidden=false;area.textContent='Verifica archivio cloud in corso…';
+const serialize=x=>JSON.stringify(x??null);
+let user=null,enabled=false,timer=null,busy=false,runAgain=false,sessionToken=0;
+const metaKey=()=>user?'equilibrio-sync-'+user.id:'equilibrio-sync-none';
+const loadMeta=()=>{try{return JSON.parse(localStorage.getItem(metaKey())||'null')}catch{return null}};
+const saveMeta=(payload,remoteUpdated)=>localStorage.setItem(metaKey(),JSON.stringify({baseline:serialize(payload),cloudUpdated:remoteUpdated||null,syncedAt:new Date().toISOString()}));
+const valid=x=>x&&Array.isArray(x.plan)&&x.plan.length===7;
+function status(t){$('cloudStatus').textContent=t;}
+function toggle(){
+ $('cloudAuth').hidden=!!user;$('cloudConnected').hidden=!user;
+ $('cloudCheck').hidden=!user;
+ if(!user){$('cloudAvailability').hidden=true;status('Dati locali. Accedi per sincronizzare.');}
+}
+async function cloudRead(){
+ const {data,error}=await client.from('equilibrio_data').select('payload,updated_at').eq('category','impostazioni').eq('entry_key','snapshot').maybeSingle();
+ if(error)throw error;return data;
+}
+async function cloudWrite(payload){
+ if(!user||!valid(payload))throw Error('Dati locali non validi');
+ const stamp=new Date().toISOString();
+ const {error}=await client.from('equilibrio_data').upsert({user_id:user.id,category:'impostazioni',entry_key:'snapshot',payload,updated_at:stamp},{onConflict:'user_id,category,entry_key'});
+ if(error)throw error;
+ saveMeta(payload,stamp);
+}
+function installRemote(remote){
+ if(!valid(remote.payload))throw Error('Dati cloud non validi');
+ // Conserva la versione precedente sul dispositivo per recupero, senza cancellarla.
+ const before=localStorage.getItem(KEY);
+ if(before) localStorage.setItem('equilibrio-backup-pre-sync-'+user.id,before);
+ localStorage.setItem(KEY,serialize(remote.payload));
+ saveMeta(remote.payload,remote.updated_at);
+ enabled=true;
+ status('✓ Dati cloud aggiornati sul dispositivo. Aggiorno la schermata…');
+ location.reload();
+}
+function chooseConflict(){
+ enabled=false;
+ status('⚠️ Telefono/PC e cloud contengono modifiche diverse. Esporta un backup, poi scegli manualmente Carica o Scarica. Nessuna copia è stata sovrascritta.');
+}
+async function synchronize(){
+ if(!user)return;
+ if(busy){runAgain=true;return;}
+ busy=true;const who=user.id;
+ const area=$('cloudAvailability');area.hidden=false;
+ area.textContent='Verifica automatica delle modifiche…';
  try{
   const remote=await cloudRead();
-  if(!user)return;
-  const hasLocal=!!local();
-  if(!remote){
-   area.textContent='☁️ Nessun archivio trovato sul cloud. '+(hasLocal?'Puoi usare “Carica” per creare la prima copia.':'Non ci sono ancora dati da scaricare.');
-   $('cloudDownload').disabled=true;
-  }else{
-   const date=new Date(remote.updated_at),when=Number.isNaN(date.getTime())?'data non disponibile':date.toLocaleString('it-IT');
-   area.textContent='☁️ Archivio cloud disponibile · Ultimo salvataggio: '+when+'. '+(hasLocal?'Sono presenti anche dati locali: confrontali prima di scegliere Scarica o Carica.':'Puoi scaricare i dati sul dispositivo.');
-   $('cloudDownload').disabled=false;
+  if(!user||user.id!==who)return;
+  const here=local(),current=serialize(here),meta=loadMeta(),baseline=meta?.baseline;
+  if(remote&&!valid(remote.payload))throw Error('L’archivio cloud è incompleto: sincronizzazione bloccata');
+  const remoteString=remote?serialize(remote.payload):null;
+  $('cloudDownload').disabled=!remote;
+  area.textContent=remote?'☁️ Ultimo salvataggio cloud: '+new Date(remote.updated_at).toLocaleString('it-IT'):'☁️ Nessun archivio cloud';
+  // Prima connessione: nessun precedente comune noto. Non sovrascrivere due archivi esistenti.
+  if(!meta){
+   if(!remote && valid(here)){await cloudWrite(here);enabled=true;status('✓ Prima copia caricata sul cloud automaticamente');return;}
+   if(remote && !valid(here)){installRemote(remote);return;}
+   if(remote && valid(here)&&current===remoteString){saveMeta(here,remote.updated_at);enabled=true;status('✓ I due archivi sono già identici');return;}
+   if(remote && valid(here)){chooseConflict();return;}
+   status('Nessun dato da sincronizzare.');return;
   }
- }catch(e){
-  area.textContent='⚠️ Impossibile verificare i dati cloud: '+e.message+'. I dati locali non sono stati modificati.';
-  $('cloudDownload').disabled=false;
- }
+  if(!remote){
+   if(valid(here)){await cloudWrite(here);enabled=true;status('✓ Archivio cloud ripristinato dai dati locali');}
+   return;
+  }
+  const localChanged=current!==baseline,cloudChanged=remoteString!==baseline;
+  if(!localChanged&&!cloudChanged){enabled=true;status('✓ Tutto aggiornato su PC e cloud');return;}
+  if(localChanged&&!cloudChanged){await cloudWrite(here);enabled=true;status('✓ Modifiche del dispositivo caricate sul cloud');return;}
+  if(!localChanged&&cloudChanged){installRemote(remote);return;}
+  if(current===remoteString){saveMeta(here,remote.updated_at);enabled=true;status('✓ Archivi allineati');return;}
+  chooseConflict();
+ }catch(e){status('⚠️ Sincronizzazione non completata: '+e.message+'. Dati locali conservati.');}
+ finally{busy=false;if(runAgain){runAgain=false;setTimeout(synchronize,200)}}
 }
-$('cloudCheck').onclick=checkCloud;
-
-async function cloudWrite(){const data=local();if(!data)throw Error('Nessun dato locale valido');const {error}=await client.from('equilibrio_data').upsert({user_id:user.id,category:'impostazioni',entry_key:'snapshot',payload:data,updated_at:new Date().toISOString()},{onConflict:'user_id,category,entry_key'});if(error)throw error;}
-async function upload(){if(!user||busy)return;busy=true;try{const remote=await cloudRead();if(remote&&!enabled&&!confirm('Sul cloud esistono già dati. Sostituirli con quelli di questo dispositivo?'))return;await cloudWrite();enabled=true;status('✓ Sincronizzazione attiva · dati aggiornati sul cloud');await checkCloud()}catch(e){status('Errore cloud: '+e.message)}finally{busy=false}}
-async function download(){if(!user||busy)return;busy=true;try{const remote=await cloudRead();if(!remote){status('Nessun dato sul cloud. Usa Carica per inviare quelli locali.');return}if(!remote.payload||!Array.isArray(remote.payload.plan)||remote.payload.plan.length!==7)throw Error('Backup cloud non valido');if(!confirm('Sostituire i dati di questo dispositivo con quelli del cloud? Esporta un backup se necessario.'))return;localStorage.setItem(KEY,JSON.stringify(remote.payload));enabled=true;location.reload()}catch(e){status('Errore cloud: '+e.message)}finally{busy=false}}
-async function login(register=false){const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;if(!email||!password){status('Inserisci email e password.');return}status('Verifica accesso in corso…');try{const {data,error}=register?await client.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await client.auth.signInWithPassword({email,password});if(error)throw error;if(register&&!data.session){status('Controlla la tua email per confermare la registrazione.');return}user=data.user;toggle();await checkCloud()}catch(e){status('Accesso non riuscito: '+e.message)}}
+$('cloudCheck').onclick=synchronize;
+async function upload(){
+ if(!user||busy)return;busy=true;
+ try{
+  const remote=await cloudRead();
+  if(remote&&!confirm('ATTENZIONE: sostituirai i dati cloud con quelli di questo dispositivo. Prima esporta un backup. Continuare?'))return;
+  await cloudWrite(local());enabled=true;status('✓ Dati del dispositivo salvati sul cloud');
+ }catch(e){status('Errore caricamento: '+e.message)}
+ finally{busy=false}
+}
+async function download(){
+ if(!user||busy)return;busy=true;
+ try{
+  const remote=await cloudRead();
+  if(!remote){status('Nessun dato online da scaricare.');return;}
+  if(!confirm('ATTENZIONE: sostituirai i dati del dispositivo con quelli del cloud. Prima esporta un backup. Continuare?'))return;
+  installRemote(remote);
+ }catch(e){status('Errore scaricamento: '+e.message)}
+ finally{busy=false}
+}
+async function login(register=false){
+ const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;
+ if(!email||!password){status('Inserisci email e password.');return;}
+ status('Verifica accesso in corso…');
+ try{
+  const {data,error}=register?await client.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await client.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  if(register&&!data.session){status('Controlla la email per confermare la registrazione.');return;}
+  user=data.user;toggle();await synchronize();
+ }catch(e){status('Accesso non riuscito: '+e.message)}
+}
 $('cloudLogin').onclick=()=>login(false);$('cloudRegister').onclick=()=>login(true);
-$('cloudRecovery').onclick=async()=>{const email=$('cloudEmail').value.trim();if(!email){status('Inserisci prima la tua email.');return}const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});status(error?'Errore: '+error.message:'Se l’account esiste riceverai un’email di recupero.')};
-$('cloudLogout').onclick=async()=>{enabled=false;await client.auth.signOut();user=null;toggle()};$('cloudUpload').onclick=upload;$('cloudDownload').onclick=download;
-window.addEventListener('eq-local-change',()=>{if(!enabled||!user)return;clearTimeout(timer);timer=setTimeout(async()=>{if(busy)return;busy=true;try{await cloudWrite();status('✓ Modifiche sincronizzate')}catch(e){status('Modifiche solo locali: '+e.message+' · riprova con Carica')}finally{busy=false}},1100)});
-window.addEventListener('online',()=>{if(user&&enabled)status('Connessione ripristinata. Usa Carica per sincronizzare eventuali modifiche offline.')});
-client.auth.onAuthStateChange((event,session)=>{user=session?.user||null;if(!user)enabled=false;toggle();if(user && (event==='SIGNED_IN'||event==='INITIAL_SESSION'))checkCloud()});client.auth.getUser().then(({data})=>{user=data?.user||null;toggle();if(user)checkCloud()});
+$('cloudRecovery').onclick=async()=>{
+ const email=$('cloudEmail').value.trim();if(!email){status('Inserisci prima la email.');return;}
+ try{const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});status(error?'Errore: '+error.message:'Se l’account esiste riceverai una email di recupero.')}catch(e){status('Errore: '+e.message)}
+};
+$('cloudLogout').onclick=async()=>{enabled=false;await client.auth.signOut();user=null;toggle()};
+$('cloudUpload').onclick=upload;$('cloudDownload').onclick=download;
+window.addEventListener('eq-local-change',()=>{
+ if(!user)return;
+ clearTimeout(timer);
+ timer=setTimeout(synchronize,1300);
+});
+window.addEventListener('online',()=>{if(user)synchronize()});
+window.addEventListener('focus',()=>{if(user)synchronize()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&user)synchronize()});
+client.auth.onAuthStateChange((event,session)=>{
+ const old=user?.id||null;user=session?.user||null;
+ if(!user){enabled=false;toggle();return;}
+ toggle();
+ if(old!==user.id || event==='SIGNED_IN'||event==='INITIAL_SESSION')setTimeout(synchronize,100);
+});
+client.auth.getUser().then(({data})=>{if(data?.user){user=data.user;toggle();synchronize()}}).catch(e=>status('Errore di sessione: '+e.message));
 })();
 </script></body></html>
