@@ -5,8 +5,8 @@
 .statusGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.nutri{border:1px solid #dce4de;border-left:5px solid #81918b;border-radius:11px;padding:11px;background:#f7f9f8}.nutri.green{border-left-color:#238359;background:#e9f7ef}.nutri.orange{border-left-color:#d18a23;background:#fff4e1}.nutri.gray{border-left-color:#8b9290}.nutri b{display:block;font-size:19px}.nutri small{display:block;color:#53665e}.nutri strong{font-size:12px}@media(max-width:500px){.statusGrid{grid-template-columns:1fr}} </style><style>
 #cloudPanel{max-width:1080px;margin:16px auto;padding:17px;background:#fff;border:1px solid #dce4de;border-radius:14px;font-family:system-ui}#cloudPanel input{width:100%;padding:10px;border:1px solid #bac9c1;border-radius:8px;margin:5px 0 10px}#cloudPanel button{padding:10px 12px;margin:4px;border:0;border-radius:9px;background:#286f59;color:white;cursor:pointer}#cloudPanel button:disabled{opacity:.5}#cloudPanel .cloudSecondary{background:#e6f2e9;color:#205441}#cloudPanel .cloudActions{display:flex;flex-wrap:wrap}#cloudPanel small{display:block;color:#5b6964;margin-top:7px}#cloudPanel .cloudWarn{color:#8b4d21}#cloudPanel .cloudStatus{font-weight:600;margin-bottom:8px}
 </style></head><body><div class="wrap">
-<header><div><div class="brand">🌿 <span>Equilibrio</span></div><div class="sub">Alimentazione flessibile · diario del benessere · v5.1</div></div><div class="pill">Dati locali · Cloud opzionale</div></header><section id="cloudPanel"><h2>☁️ Sincronizzazione privata</h2><div id="cloudStatus" class="cloudStatus" aria-live="polite">Dati salvati in locale. Accesso cloud non attivo.</div><div id="cloudAvailability" role="status" aria-live="polite" style="margin:8px 0;font-size:.94rem" hidden></div><button id="cloudCheck" type="button" style="margin:3px 0 12px" hidden>🔄 Verifica dati sul cloud</button><div id="cloudAuth"><label>Email<input id="cloudEmail" type="email" autocomplete="username" placeholder="La tua email"></label><label>Password<input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Password del tuo account Supabase"></label><div class="cloudActions"><button id="cloudLogin">Accedi</button><button id="cloudRegister" class="cloudSecondary">Registrati</button><button id="cloudRecovery" class="cloudSecondary">Recupera password</button></div></div><div id="cloudConnected" hidden><div class="cloudActions"><button id="cloudUpload">Carica i dati di questo dispositivo sul cloud</button><button id="cloudDownload" class="cloudSecondary">Scarica i dati cloud su questo dispositivo</button><button id="cloudLogout" class="cloudSecondary">Esci dall'account</button></div><small class="cloudWarn">Al primo accesso scegli se mantenere i dati locali o quelli già presenti sul cloud. Caricare o scaricare sostituisce l'altra copia: esporta prima un backup da Preferenze.</small><small>Quando la sincronizzazione è attiva, ogni modifica viene inviata al cloud. Non modificare contemporaneamente da due dispositivi. Se offline, i dati restano locali e occorre risincronizzarli al ritorno della connessione.</small></div><small>Il codice è pubblico su GitHub, i dati personali no. La sicurezza richiede RLS attiva e policy configurate correttamente su Supabase.</small></section>
-<section class="panel" id="catalogPanel"><h2>🔎 Catalogo alimenti online</h2><p class="desc">Cerca prodotti su Open Food Facts per nome o codice a barre. I valori sono forniti da terzi: verifica sempre l’etichetta prima di salvare. I prodotti importati si aggiungono al catalogo personale su questo dispositivo e, quando la sincronizzazione è attiva, al cloud.</p><div class="grid"><div class="field"><label for="offQuery">Nome, marca o codice EAN</label><input id="offQuery" placeholder="Es. yogurt greco, pane integrale, 800..." autocomplete="off"></div><div class="field"><label for="offBarcode">Codice a barre</label><div class="controls"><input id="offBarcode" inputmode="numeric" placeholder="EAN"><button class="secondary" id="offScan">📷 Scansiona</button></div></div></div><div class="actions"><button class="primary" id="offSearch">Cerca alimenti</button><button class="secondary" id="offDirect">Cerca codice</button></div><div id="offScanArea" class="hidden" style="margin-top:12px"><video id="offVideo" autoplay playsinline muted style="width:100%;max-width:360px;border-radius:12px"></video><button class="secondary" id="offStop">Ferma fotocamera</button></div><p id="offMessage" class="hint" aria-live="polite"></p><div id="offResults" class="recipeList"></div><div id="offSaved" class="hint"></div></section><section class="hero"><div><h1>Una giornata alla volta.</h1><p>Pianifica i pasti, scegli cosa ti piace, osserva come ti senti. Nessun cibo proibito, nessuna compensazione.</p></div><div class="heroStats"><div class="stat"><b>81 <small>kg</small></b><small>peso iniziale</small></div><div class="stat"><b>174 <small>cm</small></b><small>altezza</small></div><div class="stat"><b>26,8</b><small>IMC iniziale</small></div></div></section>
+<header><div><div class="brand">🌿 <span>Equilibrio</span></div><div class="sub">Alimentazione flessibile · diario del benessere · v5.3</div></div><div class="pill">Dati locali · Cloud opzionale</div></header><section id="cloudPanel"><h2>☁️ Sincronizzazione privata</h2><div id="cloudStatus" class="cloudStatus" aria-live="polite">Dati salvati in locale. Accesso cloud non attivo.</div><div id="cloudAvailability" role="status" aria-live="polite" style="margin:8px 0;font-size:.94rem" hidden></div><button id="cloudCheck" type="button" style="margin:3px 0 12px" hidden>🔄 Verifica dati sul cloud</button><div id="cloudAuth"><label>Email<input id="cloudEmail" type="email" autocomplete="username" placeholder="La tua email"></label><label>Password<input id="cloudPassword" type="password" autocomplete="current-password" placeholder="Password del tuo account Supabase"></label><div class="cloudActions"><button id="cloudLogin">Accedi</button><button id="cloudRegister" class="cloudSecondary">Registrati</button><button id="cloudRecovery" class="cloudSecondary">Recupera password</button></div></div><div id="cloudConnected" hidden><div class="cloudActions"><button id="cloudUpload">Carica i dati di questo dispositivo sul cloud</button><button id="cloudDownload" class="cloudSecondary">Scarica i dati cloud su questo dispositivo</button><button id="cloudLogout" class="cloudSecondary">Esci dall'account</button></div><small class="cloudWarn">Al primo accesso scegli se mantenere i dati locali o quelli già presenti sul cloud. Caricare o scaricare sostituisce l'altra copia: esporta prima un backup da Preferenze.</small><small>Quando la sincronizzazione è attiva, ogni modifica viene inviata al cloud. Non modificare contemporaneamente da due dispositivi. Se offline, i dati restano locali e occorre risincronizzarli al ritorno della connessione.</small></div><small>Il codice è pubblico su GitHub, i dati personali no. La sicurezza richiede RLS attiva e policy configurate correttamente su Supabase.</small></section>
+<section class="panel" id="catalogPanel"><h2>🔎 Catalogo alimenti online</h2><p class="desc">Cerca prodotti su Open Food Facts per nome o codice a barre. I valori sono forniti da terzi: verifica sempre l’etichetta prima di salvare. I prodotti importati si aggiungono al catalogo personale su questo dispositivo e, quando la sincronizzazione è attiva, al cloud.</p><div class="grid"><div class="field"><label for="offQuery">Nome, marca o codice EAN</label><input id="offQuery" placeholder="Es. yogurt greco, pane integrale, 800..." autocomplete="off"></div><div class="field"><label for="offBarcode">Codice a barre</label><div class="controls"><input id="offBarcode" inputmode="numeric" placeholder="EAN"><button class="secondary" id="offScan">📷 Scansiona</button></div></div></div><div class="actions"><button class="primary" id="offSearch">Cerca alimenti</button><button class="secondary" id="offDirect">Cerca codice</button></div><div id="offScanArea" class="hidden" style="margin-top:12px"><video id="offVideo" autoplay playsinline muted style="width:100%;max-width:360px;border-radius:12px"></video><button class="secondary" id="offStop">Ferma fotocamera</button></div><p id="offMessage" class="hint" aria-live="polite"></p><div id="offResults" class="recipeList"></div><div id="offSaved" class="hint"></div><div class="recipe" id="ciqualPanel" style="margin:15px 0;padding:15px;border:1px solid #cddcd0;border-radius:12px"><b>📚 Archivio Ciqual 2025 (ANSES)</b><p class="hint">Importa una sola volta il file Excel ufficiale. I valori disponibili per 100 g saranno aggiunti agli ingredienti, utilizzabili anche senza ricerca online. Nomi originali in francese.</p><p><a href="https://entrepot.recherche.data.gouv.fr/dataset.xhtml?persistentId=doi%3A10.57745%2FRDMHWY" target="_blank" rel="noopener">Scarica “Table Ciqual 2025 … .xlsx” dalla fonte ufficiale ↗</a></p><label for="ciqualFile">Seleziona il file Ciqual .xlsx</label><input id="ciqualFile" type="file" accept=".xlsx,.xls" style="max-width:100%"><button type="button" class="secondary" id="ciqualImport">Importa catalogo Ciqual</button><p class="hint" id="ciqualStatus" aria-live="polite">Archivio Ciqual non ancora importato.</p><small>Fonte: ANSES, Table Ciqual 2025, licence ouverte Etalab 2.0, DOI 10.57745/RDMHWY. Importazione locale: verifica sempre unità, alimento e preparazione.</small></div></section><section class="hero"><div><h1>Una giornata alla volta.</h1><p>Pianifica i pasti, scegli cosa ti piace, osserva come ti senti. Nessun cibo proibito, nessuna compensazione.</p></div><div class="heroStats"><div class="stat"><b>81 <small>kg</small></b><small>peso iniziale</small></div><div class="stat"><b>174 <small>cm</small></b><small>altezza</small></div><div class="stat"><b>26,8</b><small>IMC iniziale</small></div></div></section>
 <div class="notice"><b>Prima la salute.</b> Hai riferito palpitazioni, fiato corto o capogiri occasionali e ferritina bassa. Organizza una valutazione medica tempestiva prima di una dieta dimagrante restrittiva o esercizi intensi. Se palpitazioni e fiato corto/capogiri si presentano insieme, oppure hai dolore toracico o svenimento, chiama il 112. I valori nutrizionali qui sono indicativi, non prescrizioni.</div>
 <nav class="tabs" aria-label="Sezioni"><button class="active" data-tab="planner">🍽️ Pianifica e conferma</button><button data-tab="diary">🧠 Diario emotivo</button><button data-tab="week">📅 Settimana</button><button data-tab="progress">📈 Peso e andamento</button><button data-tab="settings">⚙️ Impostazioni</button></nav>
 <section id="planner"><div class="panel"><h2>Il tuo menù, giorno per giorno</h2><p class="desc">Scegli una ricetta oppure componi il pasto con singoli ingredienti e grammi. I suggerimenti della cena variano in base agli altri pasti, senza divieti o calorie da “recuperare”.</p><div class="daybar" id="daybar"></div><div class="grid" id="meals"></div></div><div class="panel"><h2>Riepilogo indicativo della giornata</h2><p class="desc">Valori indicativi per 100 g, basati su stime generiche. Zuccheri e fibre sono calcolabili soltanto se tutti i pasti sono composti da ingredienti; per le ricette complete non sono disponibili.</p><div class="notice" id="actualHint" style="margin:8px 0">Solo i pasti confermati contano.</div><div class="summary" id="totals"></div><div id="nutriStatus" class="statusGrid"></div><p class="hint">🟢 valori descrittivi nella fascia orientativa · 🟠 da rivedere · ⚪ dato non disponibile. I colori NON attestano chetosi, salute o correttezza clinica. Per diagnosticare chetosi nutrizionale serve misurare i chetoni; con i sintomi riferiti evita di cercarla senza un medico.</p><div class="suggest"><strong>💡 Idee per la cena</strong><div id="suggestion"></div><div class="suggestBtns" id="suggestBtns"></div></div></div></section>
@@ -175,6 +175,73 @@ async function offScan(){if(!('BarcodeDetector' in window)||!navigator.mediaDevi
  }catch(e){offStop();catalogMessage('Fotocamera non disponibile: '+e.message+'. Inserisci il codice manualmente.');}
 }
 $('offSearch').onclick=()=>offFind(false);$('offDirect').onclick=()=>offFind(true);$('offScan').onclick=offScan;$('offStop').onclick=offStop;offSaved();
+
+
+const normalizeHeader=x=>String(x??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ');
+function toNutrient(value){
+ if(typeof value==='number')return Number.isFinite(value)&&value>=0?value:null;
+ const v=String(value??'').trim().replace(',','.').replace(/\s/g,'');
+ if(!v||/[<>~\-]/.test(v)||v.toLowerCase()==='traces')return null;
+ const n=Number(v);return Number.isFinite(n)&&n>=0?n:null;
+}
+async function loadSheetJS(){
+ if(window.XLSX)return;
+ const script=document.createElement('script');
+ script.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+ await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=()=>reject(Error('Impossibile caricare il lettore Excel: verifica la connessione'));document.head.appendChild(script)});
+ if(!window.XLSX)throw Error('Lettore Excel non disponibile');
+}
+function findColumn(headers,patterns){
+ return headers.findIndex(h=>patterns.some(p=>p.test(h)));
+}
+function parseCiqual(workbook){
+ const sheet=workbook.Sheets[workbook.SheetNames.find(n=>normalizeHeader(n).includes('composition'))||workbook.SheetNames[0]];
+ const rows=window.XLSX.utils.sheet_to_json(sheet,{header:1,defval:null});
+ let best=null;
+ for(let i=0;i<Math.min(18,rows.length);i++){
+  const headers=(rows[i]||[]).map(normalizeHeader);
+  const name=findColumn(headers,[/alim nom fr/,/nom de l aliment/,/nom aliment/,/food name/]);
+  const prot=findColumn(headers,[/proteine/,/protein/]);
+  const carbs=findColumn(headers,[/glucide/,/carbohydrate/]);
+  const fat=findColumn(headers,[/lipide/,/fat total/]);
+  const kcal=findColumn(headers,[/energie.*kcal/,/energy.*kcal/,/energie.*\bcal\b/]);
+  const score=[name,prot,carbs,fat,kcal].filter(v=>v>=0).length;
+  if(!best||score>best.score)best={i,headers,name,prot,carbs,fat,kcal,score};
+ }
+ if(!best||best.score<5)throw Error('Colonne Ciqual non riconosciute. Occorre il file ufficiale 2025 in formato Excel.');
+ const sugar=findColumn(best.headers,[/sucres.*g/,/^sucres/,/sugars/]);
+ const fiber=findColumn(best.headers,[/fibre/,/fiber/]);
+ const code=findColumn(best.headers,[/alim code/]);
+ const records=[];
+ for(const row of rows.slice(best.i+1)){
+  const name=String(row[best.name]||'').trim();
+  if(name.length<3)continue;
+  const k=toNutrient(row[best.kcal]),p=toNutrient(row[best.prot]),c=toNutrient(row[best.carbs]),f=toNutrient(row[best.fat]);
+  if([k,p,c,f].some(v=>v===null))continue;
+  const rawCode=String(row[code]??'').replace(/[^0-9a-z]/gi,'').slice(0,24);
+  records.push({id:'ciqual_'+(rawCode||records.length),name:name+' · Ciqual',k,p,c,f,sugar:sugar>=0?toNutrient(row[sugar]):null,fiber:fiber>=0?toNutrient(row[fiber]):null,groups:['altri'],source:'ANSES Ciqual 2025'});
+ }
+ return records;
+}
+$('ciqualImport').onclick=async()=>{
+ const input=$('ciqualFile'),file=input.files?.[0],info=$('ciqualStatus');
+ if(!file){info.textContent='Seleziona prima il file Excel Ciqual ufficiale.';return;}
+ info.textContent='Lettura del catalogo in corso…';
+ try{
+  await loadSheetJS();
+  const data=await file.arrayBuffer(),book=window.XLSX.read(data,{type:'array'});
+  const parsed=parseCiqual(book);
+  if(parsed.length<500)throw Error('Solo '+parsed.length+' alimenti completi riconosciuti: importazione sospesa per evitare dati incompleti.');
+  if(!confirm('Importare '+parsed.length+' alimenti Ciqual nel catalogo personale? Il file può aumentare la dimensione del backup cloud.'))return;
+  const old=state.personalIngredients||[],map=new Map(old.map(x=>[x.id,x]));
+  parsed.forEach(x=>map.set(x.id,x));
+  state.personalIngredients=[...map.values()];
+  for(const x of parsed){const idx=ING.findIndex(y=>y.id===x.id);if(idx>=0)ING[idx]=x;else ING.push(x);}
+  ING_SORTED.splice(0,ING_SORTED.length,...[...ING].sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'})));
+  persist();renderPlanner();offSaved();
+  info.textContent='✓ '+parsed.length+' alimenti Ciqual importati. Sono ricercabili nella composizione dei pasti. Dati non tradotti dal francese.';
+ }catch(e){info.textContent='Importazione non completata: '+e.message;}
+};
 
 const actualDay=(new Date().getDay()+6)%7;day=actualDay;tabs();renderPlanner();setupDiary();setupSettings();setupWeights();renderHistory();
 })();
