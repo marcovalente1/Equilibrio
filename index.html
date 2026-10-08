@@ -144,8 +144,26 @@ async function offFind(byCode=false){
  catalogMessage('Ricerca in corso…');$('offResults').innerHTML='';try{
  const url=byCode?'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(query)+'.json':'https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(query)+'&search_simple=1&action=process&json=1&page_size=12';
  const resp=await fetch(url,{headers:{Accept:'application/json'}});if(!resp.ok)throw Error('Servizio non raggiungibile ('+resp.status+')');const data=await resp.json();offResults=byCode?(data.product?[data.product]:[]):(data.products||[]).slice(0,12);offList();catalogMessage(offResults.length?`${offResults.length} risultati: controlla marca, descrizione e valori per 100 g.`:'Nessun prodotto trovato. Prova con un termine diverso.');
- }catch(e){catalogMessage('Ricerca non disponibile: '+e.message+'. Puoi riprovare più tardi.');}
+ }catch(e){fallbackCatalog(query,e instanceof TypeError?'Connessione browser/API esterna':e.message);}
 }
+
+function fallbackCatalog(query,reason){
+ const q=encodeURIComponent(query);
+ const box=$('offResults');
+ box.innerHTML='<div class="recipe"><b>Ricerca online temporaneamente non accessibile</b><p>Il catalogo Open Food Facts può bloccare le richieste automatiche dal browser. Puoi aprire la ricerca ufficiale in una nuova scheda, leggere i valori per 100 g e aggiungere il prodotto manualmente qui.</p><a href="https://it.openfoodfacts.org/cgi/search.pl?search_terms='+q+'&search_simple=1&action=process" target="_blank" rel="noopener noreferrer">🔎 Cerca su Open Food Facts ↗</a><div style="margin-top:12px"><button type="button" class="secondary" id="offManualOpen">Inserisci i valori dall’etichetta</button></div><div id="offManualBox" class="hidden" style="margin-top:12px"><label>Nome ingrediente <input id="offManualName" type="text" maxlength="130"></label><label>Calorie (kcal per 100 g) <input id="offManualK" type="number" min="0" step=".1"></label><label>Carboidrati (g) <input id="offManualC" type="number" min="0" step=".1"></label><label>Proteine (g) <input id="offManualP" type="number" min="0" step=".1"></label><label>Grassi (g) <input id="offManualF" type="number" min="0" step=".1"></label><label>Zuccheri (g, opzionale) <input id="offManualS" type="number" min="0" step=".1"></label><label>Fibre (g, opzionale) <input id="offManualFib" type="number" min="0" step=".1"></label><button type="button" id="offManualSave">Salva ingrediente</button></div></div>';
+ $('offManualOpen').onclick=()=>{$('offManualBox').classList.remove('hidden');$('offManualName').value=query};
+ $('offManualSave').onclick=()=>{
+ const name=$('offManualName').value.trim();const numbers=['K','C','P','F'].map(k=>$('offManual'+k).value.trim());
+ if(!name||numbers.some(x=>x===''||!Number.isFinite(Number(x))||Number(x)<0)){catalogMessage('Compila nome, calorie, carboidrati, proteine e grassi con valori validi per 100 g.');return;}
+ const opt=k=>{const v=$('offManual'+k).value.trim();return v===''?null:Number(v)};
+ const item={id:'manual_'+Date.now(),name,k:Number(numbers[0]),c:Number(numbers[1]),p:Number(numbers[2]),f:Number(numbers[3]),sugar:opt('S'),fiber:opt('Fib'),groups:['altri'],source:'Etichetta/manuale'};
+ if(!state.personalIngredients)state.personalIngredients=[];state.personalIngredients.push(item);ING.push(item);
+ ING_SORTED.splice(0,ING_SORTED.length,...[...ING].sort((a,b)=>a.name.localeCompare(b.name,'it',{sensitivity:'base'})));
+ persist();renderPlanner();offSaved();$('offResults').innerHTML='';catalogMessage('✓ Ingrediente personale salvato. Lo trovi nella composizione dei pasti.');
+ };
+ catalogMessage('Ricerca automatica non riuscita ('+reason+'). Usa la ricerca ufficiale o l’inserimento manuale.');
+}
+
 function offSaved(){const a=state.personalIngredients||[];$('offSaved').textContent=`Prodotti personali salvati: ${a.length}. I valori esterni sono indicativi.`;}
 function offStop(){offLoop=false;if(offStream){offStream.getTracks().forEach(t=>t.stop());offStream=null;}$('offScanArea').classList.add('hidden');}
 async function offScan(){if(!('BarcodeDetector' in window)||!navigator.mediaDevices?.getUserMedia){return catalogMessage('Scansione non supportata qui. Inserisci il codice EAN manualmente.');}
