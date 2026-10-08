@@ -173,7 +173,7 @@ const metaKey=()=>user?'equilibrio-sync-'+user.id:'equilibrio-sync-none';
 const loadMeta=()=>{try{return JSON.parse(localStorage.getItem(metaKey())||'null')}catch{return null}};
 const saveMeta=(payload,remoteUpdated)=>localStorage.setItem(metaKey(),JSON.stringify({baseline:serialize(payload),cloudUpdated:remoteUpdated||null,syncedAt:new Date().toISOString()}));
 const valid=x=>x&&Array.isArray(x.plan)&&x.plan.length===7;
-function status(t){$('cloudStatus').textContent=t;}
+
 function toggle(){
  $('cloudAuth').hidden=!!user;$('cloudConnected').hidden=!user;
  $('cloudCheck').hidden=!user;
